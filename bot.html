@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DocSummarizer — Chat</title>
+
+  <!-- Inter font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ---------- theme vars ---------- */
+    :root{
+      --bg: #0f1115;
+      --panel: #151719;
+      --muted-panel: #1e2126;
+      --surface: #0b0c0f;
+      --primary: #646cff;
+      --primary-600: #535bf2;
+      --text: #e6edf3;
+      --muted: #9aa3b2;
+      --accent: #2dd4bf;
+      --radius: 12px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
+    body{
+      background: linear-gradient(180deg,var(--bg) 0%, #07080a 100%);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      display:flex;
+      gap:18px;
+      height:100vh;
+      padding:18px;
+    }
+
+    /* ---------- layout ---------- */
+    .app {
+      display:flex;
+      flex:1;
+      min-height:0; /* important for scroll children */
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+    }
+
+    /* sidebar */
+    aside.sidebar{
+      width:300px;
+      background: linear-gradient(180deg,var(--panel),var(--muted-panel));
+      border-right:1px solid rgba(255,255,255,0.03);
+      display:flex;
+      flex-direction:column;
+      padding:18px;
+      gap:12px;
+      min-width:220px;
+    }
+    .brand { display:flex; align-items:center; gap:10px; }
+    .logo {
+      width:44px;height:44px;border-radius:10px;
+      display:grid;place-items:center;background:linear-gradient(135deg,var(--primary),var(--primary-600));
+      color:white;font-weight:700;font-size:18px;box-shadow:0 6px 18px rgba(100,108,255,0.18)
+    }
+    .brand h1{ font-size:18px; margin:0; font-weight:700; letter-spacing:0.2px }
+    .brand p{ margin:0; font-size:12px; color:var(--muted) }
+
+    .controls { display:flex; gap:8px; align-items:center; }
+    .btn {
+      background:var(--primary);
+      color:#fff;border:none;padding:10px 12px;border-radius:10px;font-weight:600;cursor:pointer;
+      box-shadow: 0 6px 18px rgba(100,108,255,0.14);
+    }
+    .btn.ghost { background:transparent;border:1px solid rgba(255,255,255,0.04); color:var(--text); box-shadow:none }
+    .search {
+      display:flex; gap:8px; align-items:center;
+      padding:8px;border-radius:10px;background:rgba(255,255,255,0.02);
+      border:1px solid rgba(255,255,255,0.02);
+    }
+    .search input{
+      background:transparent;border:none;outline:none;color:var(--text);width:100%;
+    }
+
+    .chats {
+      margin-top:6px; overflow:auto; padding-right:6px; display:flex; flex-direction:column; gap:8px; flex:1;
+    }
+    .chat-item {
+      display:flex; gap:10px; align-items:center; padding:10px; border-radius:10px; cursor:pointer;
+      transition: all .12s ease; color:var(--muted);
+    }
+    .chat-item:hover { background: rgba(255,255,255,0.02); color:var(--text) }
+    .chat-item.active { background: linear-gradient(90deg, rgba(100,108,255,0.12), rgba(83,91,242,0.06)); color:var(--text); box-shadow: inset 0 0 0 1px rgba(100,108,255,0.04) }
+    .chat-avatar { width:38px;height:38px;border-radius:8px;background:rgba(255,255,255,0.03);display:grid;place-items:center;font-weight:600;color:var(--primary) }
+    .chat-meta small{ color:var(--muted); display:block }
+
+    /* ---------- main area ---------- */
+    main.chat-area{
+      flex:1; display:flex; flex-direction:column; min-width:0; /* allow children to shrink */
+      background: linear-gradient(180deg,var(--surface),#05060a);
+      padding:18px; gap:14px;
+    }
+    header.chat-header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:8px 12px; border-radius:12px; background:linear-gradient(90deg, rgba(255,255,255,0.02), transparent);
+      border:1px solid rgba(255,255,255,0.02);
+    }
+    .chat-title { display:flex; flex-direction:column; }
+    .chat-title h2{ margin:0; font-size:16px; }
+    .chat-title p{ margin:0; color:var(--muted); font-size:13px }
+
+    .header-actions { display:flex; gap:8px; align-items:center }
+    .icon-btn { background:transparent;border:1px solid rgba(255,255,255,0.03);padding:8px;border-radius:10px;color:var(--muted); cursor:pointer }
+    .icon-btn:hover{ color:var(--text); border-color:rgba(100,108,255,0.08) }
+
+    /* chat box (scroll) */
+    .chat-window { flex:1; min-height:0; padding:20px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent); overflow:auto; display:flex; flex-direction:column; gap:12px; }
+    .empty-card { max-width:700px; margin: 40px auto; text-align:center; color:var(--muted) }
+    .empty-card .cta { margin-top:14px; }
+
+    /* message bubble */
+    .msg {
+      max-width:78%;
+      padding:12px 14px;
+      border-radius:14px;
+      display:inline-block;
+      line-height:1.4;
+      font-size:15px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+      opacity:0;
+      transform: translateY(8px);
+      animation: msgIn .18s forwards ease;
+    }
+    @keyframes msgIn { to{ opacity:1; transform:none } }
+
+    .row { display:flex; gap:12px; align-items:flex-end; }
+    .row.user { justify-content:flex-end }
+    .row.user .msg { background: linear-gradient(90deg,var(--primary),var(--primary-600)); color:white; border-bottom-right-radius:6px; border-bottom-left-radius:14px }
+    .row.bot { justify-content:flex-start }
+    .row.bot .avatar { width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.02); display:grid;place-items:center;color:var(--primary); font-weight:700 }
+    .row.bot .msg { background: rgba(255,255,255,0.02); color:var(--text) }
+
+    .meta { display:block; font-size:12px;color:var(--muted); margin-top:6px }
+
+    /* input area */
+    .composer {
+      display:flex; gap:10px; padding:12px; border-radius:12px; align-items:center;
+      background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.02);
+    }
+    .composer textarea {
+      flex:1; min-height:44px; max-height:140px; resize:none; padding:10px 12px;
+      border-radius:10px; background: rgba(0,0,0,0.25); color:var(--text); border:none; outline:none; font-size:14px;
+    }
+    .composer .send {
+      background:linear-gradient(90deg,var(--primary),var(--primary-600)); color:white; border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600;
+    }
+    .composer .send:active { transform:translateY(1px) }
+
+    /* small screens */
+    @media (max-width:900px){
+      aside.sidebar{ position:fixed; left:0; top:18px; bottom:18px; transform: translateX(-110%); z-index:40; transition:transform .18s ease; width:78%; }
+      aside.sidebar.open { transform:none }
+      body.show-overlay::after{
+        content:""; position:fixed; left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,0.45); z-index:30;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app" role="application" aria-label="Document Chat application">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar" aria-label="Chats sidebar">
+      <div class="brand" style="justify-content:space-between">
+        <div style="display:flex; gap:12px; align-items:center">
+          <div class="logo">DS</div>
+          <div>
+            <h1>DocSummarizer</h1>
+            <p>Summarize & query docs</p>
+          </div>
+        </div>
+        <button class="btn ghost" id="closeSidebar" title="Close sidebar" aria-label="Close sidebar" style="display:none">✕</button>
+      </div>
+
+      <div class="controls">
+        <button id="newChatBtn" class="btn" title="Start new chat">+ New chat</button>
+        <div style="flex:1"></div>
+      </div>
+
+      <div class="search" role="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="opacity:.7"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></circle></svg>
+        <input id="searchInput" placeholder="Search chats..." aria-label="Search chats" />
+      </div>
+
+      <div class="chats" id="chatsList" role="list" aria-label="Chat history">
+        <!-- dynamic list -->
+      </div>
+
+      <div style="margin-top:12px; font-size:13px; color:var(--muted) ;">
+        <div>Signed in as <strong>demo-user</strong></div>
+      </div>
+    </aside>
+
+    <!-- MAIN AREA -->
+    <main class="chat-area">
+      <header class="chat-header">
+        <div class="chat-title">
+          <h2 id="currentTitle">Welcome to DocSummarizer</h2>
+          <p id="currentSubtitle">Upload a document and ask questions or summarize it.</p>
+        </div>
+        <div class="header-actions">
+          <button id="openSidebarBtn" class="icon-btn" title="Open chats sidebar" aria-label="Open chats sidebar">☰</button>
+          <button id="clearBtn" class="icon-btn" title="Clear current chat" aria-label="Clear chat">🗑</button>
+        </div>
+      </header>
+
+      <section class="chat-window" id="chatWindow" aria-live="polite">
+        <!-- messages will be appended here -->
+        <div class="empty-card" id="emptyCard">
+          <h3 style="color:var(--text)">Start a conversation</h3>
+          <p>Click <strong>New chat</strong> then upload a document or ask a question to the bot.</p>
+          <div class="cta" style="display:flex;justify-content:center">
+            <button id="demoBtn" class="btn">Try demo question</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="composer" role="form" aria-label="Message composer">
+        <textarea id="inputArea" placeholder="Ask about the document or write a prompt..." aria-label="Message input"></textarea>
+        <button class="send" id="sendBtn" aria-label="Send message">Send</button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    /****************************
+     * Lightweight chat manager
+     ****************************/
+    const API_URL = "http://127.0.0.1:8000/chat"; // update if needed
+
+    // state
+    let chats = []; // {id,title,messages: [{sender,text,timestamp}]}
+    let activeChatId = null;
+
+    // elements
+    const sidebar = document.getElementById('sidebar');
+    const chatsList = document.getElementById('chatsList');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const sendBtn = document.getElementById('sendBtn');
+    const inputArea = document.getElementById('inputArea');
+    const chatWindow = document.getElementById('chatWindow');
+    const currentTitle = document.getElementById('currentTitle');
+    const currentSubtitle = document.getElementById('currentSubtitle');
+    const emptyCard = document.getElementById('emptyCard');
+    const searchInput = document.getElementById('searchInput');
+    const openSidebarBtn = document.getElementById('openSidebarBtn');
+    const closeSidebar = document.getElementById('closeSidebar');
+    const demoBtn = document.getElementById('demoBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    // persistence
+    function loadChats(){
+      try {
+        const raw = localStorage.getItem('docsum_chats_v1');
+        if(raw) chats = JSON.parse(raw);
+        else {
+          // seed one sample chat
+          chats = [{
+            id: 'welcome',
+            title: 'Getting started',
+            messages: [
+              {sender:'bot', text:'Hello 👋 — create a new chat, upload a document and then ask anything about it.', timestamp: Date.now()},
+              {sender:'bot', text:'Tip: Try "Summarize the document" as a first question.', timestamp: Date.now()}
+            ],
+            created: Date.now()
+          }];
+        }
+      } catch(e){ chats = [] }
+      if(chats.length) activeChatId = chats[0].id;
+    }
+    function saveChats(){ localStorage.setItem('docsum_chats_v1', JSON.stringify(chats)) }
+
+    // helpers
+    function id(){ return 'c_' + Math.random().toString(36).slice(2,9) }
+    function ts(t=Date.now()){ const d=new Date(t); return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) }
+    function findChat(cid){ return chats.find(c=>c.id===cid) }
+    function setActive(chatId){
+      activeChatId = chatId;
+      renderChats();
+      renderMessages();
+      // close mobile sidebar
+      if(window.innerWidth<=900) { sidebar.classList.remove('open'); document.body.classList.remove('show-overlay') }
+    }
+
+    // UI renderers
+    function renderChats(filter=''){
+      chatsList.innerHTML = '';
+      const list = chats.filter(c => c.title.toLowerCase().includes(filter.toLowerCase()));
+      list.forEach(chat=>{
+        const el = document.createElement('div');
+        el.className = 'chat-item' + (chat.id===activeChatId ? ' active' : '');
+        el.tabIndex = 0;
+        el.setAttribute('role','button');
+        el.innerHTML = `<div class="chat-avatar">${chat.title.charAt(0).toUpperCase()}</div>
+          <div class="chat-meta"><strong style="display:block;color:inherit">${escapeHtml(chat.title)}</strong><small>${chat.messages?.length ? chat.messages[chat.messages.length-1].text.slice(0,60) : ''}</small></div>`;
+        el.onclick = ()=> setActive(chat.id);
+        el.onkeydown = (e)=> { if(e.key==='Enter') setActive(chat.id) }
+        chatsList.appendChild(el);
+      });
+    }
+
+    function renderMessages(){
+      chatWindow.innerHTML = '';
+      const chat = findChat(activeChatId);
+      if(!chat){
+        emptyCard.style.display = 'block';
+        currentTitle.textContent = 'Welcome to DocSummarizer';
+        currentSubtitle.textContent = 'Create or choose a chat to begin';
+        return;
+      }
+      emptyCard.style.display = 'none';
+      currentTitle.textContent = chat.title;
+      currentSubtitle.textContent = `${chat.messages.length} messages • Created ${new Date(chat.created).toLocaleString()}`;
+
+      // render each message
+      chat.messages.forEach(m=>{
+        const row = document.createElement('div');
+        row.className = 'row ' + (m.sender==='user' ? 'user' : 'bot');
+
+        if(m.sender === 'bot'){
+          const avatar = document.createElement('div'); avatar.className='avatar'; avatar.innerHTML='B';
+          row.appendChild(avatar);
+          const bubble = document.createElement('div'); bubble.className='msg'; bubble.innerHTML = linkify(escapeHtml(m.text)) + `<div class="meta">${ts(m.timestamp)}</div>`;
+          row.appendChild(bubble);
+        } else {
+          const bubble = document.createElement('div'); bubble.className='msg'; bubble.innerHTML = escapeHtml(m.text) + `<div class="meta" style="text-align:right">${ts(m.timestamp)}</div>`;
+          row.appendChild(bubble);
+        }
+        chatWindow.appendChild(row);
+      });
+      // scroll
+      setTimeout(()=> chatWindow.scrollTop = chatWindow.scrollHeight, 50);
+    }
+
+    // interactions
+    newChatBtn.onclick = ()=> {
+      const cid = id();
+      const title = 'New Chat ' + (chats.length + 1);
+      const chat = { id: cid, title, messages: [], created: Date.now()};
+      chats.unshift(chat); // newest top
+      activeChatId = cid;
+      saveChats(); renderChats(); renderMessages();
+    };
+
+    demoBtn.onclick = ()=> {
+      inputArea.value = 'Give me a short summary of the document.';
+      sendMessage();
+    };
+
+    sendBtn.onclick = sendMessage;
+
+    inputArea.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+    });
+
+    searchInput.addEventListener('input', (e)=> renderChats(e.target.value));
+
+    openSidebarBtn.addEventListener('click', ()=> { sidebar.classList.add('open'); document.body.classList.add('show-overlay'); if(closeSidebar) closeSidebar.style.display='inline-block' });
+    if(closeSidebar) closeSidebar.addEventListener('click', ()=> { sidebar.classList.remove('open'); document.body.classList.remove('show-overlay'); closeSidebar.style.display='none' });
+
+    clearBtn.addEventListener('click', ()=> {
+      const chat = findChat(activeChatId);
+      if(!chat) return;
+      if(!confirm('Clear messages in this chat?')) return;
+      chat.messages = [];
+      saveChats(); renderMessages(); renderChats();
+    });
+
+    // send flow
+    async function sendMessage(){
+      const text = inputArea.value.trim();
+      if(!text) return;
+      const chat = findChat(activeChatId);
+      if(!chat){
+        // auto create chat if none
+        newChatBtn.click();
+      }
+      const message = { sender:'user', text, timestamp: Date.now() };
+      findChat(activeChatId).messages.push(message);
+      saveChats(); renderChats(); renderMessages();
+      inputArea.value = '';
+      inputArea.focus();
+
+      // show typing indicator
+      const typing = { sender:'bot', text: '...', timestamp: Date.now() };
+      findChat(activeChatId).messages.push(typing);
+      renderMessages();
+
+      try {
+        const resp = await fetch(API_URL, {
+          method:'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ question: text })
+        });
+        const data = await resp.json();
+        // replace typing entry with real bot answer
+        const msgs = findChat(activeChatId).messages;
+        msgs[msgs.length-1] = { sender:'bot', text: data.answer || data?.response || 'No response from server.', timestamp: Date.now() };
+      } catch(err){
+        const msgs = findChat(activeChatId).messages;
+        msgs[msgs.length-1] = { sender:'bot', text: '⚠️ Error connecting to server. Try again.', timestamp: Date.now() };
+      }
+      saveChats(); renderMessages();
+    }
+
+    // small utilities
+    function escapeHtml(s=''){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;') }
+    function linkify(text) {
+      return text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--primary)">$1</a>');
+    }
+
+    // boot
+    loadChats();
+    renderChats();
+    renderMessages();
+
+    // responsive close on outside click (mobile)
+    document.addEventListener('click', (e)=>{
+      if(window.innerWidth<=900 && !sidebar.contains(e.target) && !openSidebarBtn.contains(e.target)){
+        sidebar.classList.remove('open'); document.body.classList.remove('show-overlay');
+        if(closeSidebar) closeSidebar.style.display='none';
+      }
+    });
+
+    // keep layout stable on resize
+    window.addEventListener('resize', ()=> {
+      if(window.innerWidth>900){ sidebar.classList.remove('open'); document.body.classList.remove('show-overlay'); if(closeSidebar) closeSidebar.style.display='none' }
+    });
+  </script>
+</body>
+</html>

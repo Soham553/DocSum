@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DocBot - Chat & Upload</title>
+  <style>
+    :root {
+      --primary: #646cff;
+      --primary-hover: #535bf2;
+      --bg-dark: #1a1a1a;
+      --bg-light: #222;
+      --text: #f0f0f0;
+      --text-muted: #9ca3af;
+      --border: #333;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: var(--bg-light);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+    .profile {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-right: 10px;
+      color: white;
+    }
+    .profile-info h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+    .profile-info p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .new-chat {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 15px;
+      transition: background 0.3s;
+    }
+    .new-chat:hover {
+      background: var(--primary-hover);
+    }
+    .search-box input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 15px;
+      background: #1f1f1f;
+      color: var(--text);
+    }
+    .chat-history {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .chat-history p {
+      padding: 8px;
+      border-radius: 6px;
+      margin: 5px 0;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: background 0.2s ease;
+    }
+    .chat-history p:hover {
+      background: #333;
+      color: var(--text);
+    }
+    .library {
+      border-top: 1px solid var(--border);
+      margin-top: 15px;
+      padding-top: 10px;
+      font-size: 14px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .library:hover {
+      color: var(--text);
+    }
+
+    /* Main Chat Area */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #121212;
+    }
+    .chat-header {
+      background: var(--primary);
+      color: white;
+      padding: 15px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .chat-box {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .message {
+      padding: 12px 16px;
+      border-radius: 12px;
+      max-width: 70%;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .user {
+      align-self: flex-end;
+      background: var(--primary);
+      color: white;
+    }
+    .bot {
+      align-self: flex-start;
+      background: #2c2c2c;
+      color: var(--text);
+    }
+
+    /* Input Bar with Upload */
+    .chat-input {
+      display: flex;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      background: #1e1e1e;
+      padding: 8px;
+    }
+    .upload-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      margin-right: 10px;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    .upload-btn:hover {
+      color: var(--primary);
+    }
+    .chat-input input {
+      flex: 1;
+      border: none;
+      padding: 12px;
+      font-size: 14px;
+      border-radius: 6px;
+      outline: none;
+      background: #2c2c2c;
+      color: var(--text);
+    }
+    .chat-input button {
+      border: none;
+      background: var(--primary);
+      color: white;
+      padding: 12px 20px;
+      margin-left: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .chat-input button:hover {
+      background: var(--primary-hover);
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .upload-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #1e1e1e;
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      margin: 20px;
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+      display: none;
+    }
+
+    
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="profile">
+    <div class="avatar">S</div>
+    <div class="profile-info">
+      <h3>Soham</h3>
+      <p>Free User</p>
+    </div>
+  </div>
+  <div class="chat-history">
+    <p class="summarization">📄 Summarization</p>
+    <p>📝 Q/A bot</p>
+    <p>📊 About Us</p>
+  </div>
+  <div class="library">📚 Library</div>
+  <button class="logout-btn" onclick="logoutUser()">🚪 Logout</button>
+</div>
+  <div class="upload-box">
+    <h2>Upload a Document 📄</h2>
+    <form action="/gist/upload" method="POST" enctype="multipart/form-data" id="uploadForm">
+      <div class="file-drop-area" id="fileDropArea">
+        <span class="file-msg">Drag & Drop your file here or click to select</span>
+        <input type="file" name="file" id="fileInput" required>
+      </div>
+      <button type="submit">Upload</button>
+    </form>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chat-box");
+    const userInput = document.getElementById("user-input");
+    const fileUpload = document.getElementById("file-upload");
+    const API_URL = "http://127.0.0.1:8000/chat"; // FastAPI endpoint
+
+    const uploadbox = document.querySelector('.summarization');
+
+    uploadbox.addEventListener('click', () => {
+        document.querySelector('.upload-box').style.display = 'flex';    });
+
+    function addMessage(text, sender) {
+      const div = document.createElement("div");
+      div.classList.add("message", sender);
+      div.innerText = text;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      addMessage(text, "user");
+      userInput.value = "";
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: text })
+        });
+        const data = await response.json();
+        addMessage(data.answer, "bot");
+      } catch (error) {
+        addMessage("⚠️ Error connecting to server.", "bot");
+      }
+    }
+
+    fileUpload.addEventListener("change", () => {
+      if (fileUpload.files.length > 0) {
+        addMessage("📂 Uploaded: " + fileUpload.files[0].name, "user");
+      }
+    });
+
+    userInput.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    async function logoutUser() {
+  try {
+    const response = await fetch("http://localhost:8000/api/v1/users/logout", {
+      method: "POST",
+      credentials: "include" // 👈 very important (so cookies get cleared)
+    });
+
+    if (response.ok) {
+      // Redirect to login page
+      window.location.href = "index.html";
+    } else {
+      const error = await response.json();
+      addMessage("⚠️ Logout failed: " + (error.message || "Unknown error"), "bot");
+    }
+  } catch (err) {
+    addMessage("⚠️ Error logging out.", "bot");
+  }
+}
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DocSummarizer • Hackathon Project</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-200 font-sans">
+
+  <!-- Navbar -->
+  <header class="flex justify-between items-center px-8 py-4 bg-gray-950 border-b border-gray-800">
+    <h1 class="text-3xl font-extrabold text-blue-400 tracking-wide">DocSum</h1>
+    <nav class="space-x-6">
+      <button onclick="openModal('loginModal')" class="text-gray-400 hover:text-blue-400 transition">Login</button>
+      <button onclick="openModal('registerModal')" class="text-white bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-semibold shadow-md transition">
+        Sign Up
+      </button>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="text-center py-28 px-6 bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+    <h2 class="text-5xl md:text-6xl font-extrabold text-white drop-shadow-lg">
+      Summarize Documents Instantly ⚡
+    </h2>
+    <p class="mt-6 text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+      Upload any document and get a concise summary with <span class="text-blue-400 font-semibold">clickable links</span> 
+      to the original content. Save time while preserving context.
+    </p>
+    <div class="mt-10 flex justify-center space-x-4">
+      <a href="#" class="text-white bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold shadow-lg transition transform hover:scale-105">
+        🚀 Get Started
+      </a>
+    </div>
+  </section>
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="hidden fixed inset-0 flex items-center justify-center bg-black/70 z-50">
+    <div class="bg-gray-900 p-8 rounded-xl w-full max-w-md">
+      <h3 class="text-2xl font-bold text-white mb-4">Login</h3>
+      <input id="login-username" type="text" placeholder="Username or Email" class="w-full mb-3 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-200">
+      <input id="login-password" type="password" placeholder="Password" class="w-full mb-3 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-200">
+      <button onclick="loginUser()" class="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-bold">Login</button>
+      <button onclick="closeModal('loginModal')" class="w-full mt-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div id="registerModal" class="hidden fixed inset-0 flex items-center justify-center bg-black/70 z-50">
+    <div class="bg-gray-900 p-8 rounded-xl w-full max-w-md">
+      <h3 class="text-2xl font-bold text-white mb-4">Register</h3>
+      <input id="reg-fullname" type="text" placeholder="Full Name" class="w-full mb-3 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-200">
+      <input id="reg-username" type="text" placeholder="Username" class="w-full mb-3 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-200">
+      <input id="reg-email" type="email" placeholder="Email" class="w-full mb-3 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-200">
+      <input id="reg-password" type="password" placeholder="Password" class="w-full mb-3 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-200">
+      <button onclick="registerUser()" class="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-bold">Sign Up</button>
+      <button onclick="closeModal('registerModal')" class="w-full mt-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed bottom-6 right-6 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg"></div>
+
+  <!-- Footer -->
+  <footer class="bg-gray-950 py-8 text-center border-t border-gray-800">
+    <p class="text-gray-500">
+      © 2025 <span class="text-blue-400 font-semibold">DocSummarizer</span> • Built for Hackathons 🚀 • Powered by <span class="text-blue-400">FastAPI & AI</span>
+    </p>
+  </footer>
+
+  <!-- JS -->
+  <script>
+    const API_BASE = "http://localhost:8000/api/v1/user";
+
+    function openModal(id) {
+      document.getElementById(id).classList.remove("hidden");
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add("hidden");
+    }
+    function showToast(msg, success=true) {
+      const toast = document.getElementById("toast");
+      toast.innerText = msg;
+      toast.className = success 
+        ? "fixed bottom-6 right-6 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg"
+        : "fixed bottom-6 right-6 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg";
+      toast.classList.remove("hidden");
+      setTimeout(()=>toast.classList.add("hidden"), 3000);
+    }
+
+    async function loginUser() {
+      const username = document.getElementById("login-username").value;
+      const password = document.getElementById("login-password").value;
+
+      try {
+        const res = await fetch(`${API_BASE}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email: username, password }),
+          credentials: "include" // important for cookies
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Login failed");
+
+        showToast("Login Successful ✅");
+        closeModal("loginModal");
+      } catch (err) {
+        showToast(err.message, false);
+      }
+    }
+
+    function redirectToMain() {
+    window.location.href = "main.html";
+   }
+
+    async function registerUser() {
+      const fullName = document.getElementById("reg-fullname").value;
+      const username = document.getElementById("reg-username").value;
+      const email = document.getElementById("reg-email").value;
+      const password = document.getElementById("reg-password").value;
+
+      try {
+        const res = await fetch(`${API_BASE}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fullName, username, email, password }),
+          credentials: "include"
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Register failed");
+
+        redirectToMain();
+        
+      } catch (err) {
+        showToast(err.message, false);
+      }
+    }
+  </script>
+</body>
+</html>
