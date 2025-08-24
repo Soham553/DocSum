@@ -1,0 +1,5 @@
+numpy
+transformer
+pandas
+torch
+regex
