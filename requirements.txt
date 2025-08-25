@@ -3,3 +3,4 @@ sentence-transformers
 PyPDF2
 python-docx
 google-genai
+pypdf2
