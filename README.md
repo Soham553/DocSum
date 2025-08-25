@@ -1,5 +1,5 @@
 # 📄 Document Summarizer  
-🔗 **[🚀 Live Prototype – Try it Here](https://your-working-prototype-link.com)**  
+🔗 **[🚀 Live Prototype – Try it Here](https://github.com/Soham553/DocSum))**  
 
 An **AI-powered web application** that automatically generates concise summaries from long documents (**PDF, DOCX, TXT**). Built with **FastAPI, Hugging Face Transformers**, and a clean frontend for file upload + instant summaries.  
 
