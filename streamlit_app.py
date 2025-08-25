@@ -7,7 +7,7 @@ from google.genai import types
 import io
 
 # -------------------- Config --------------------
-API_KEY = "AIzaSyAd-pJNXnxFNCr-zrb967WAILMuD6O-QxQ"
+API_KEY = "AIzaSyD1Jq-BNeza9Nogx9AyNuI6hPQeWa7FGs0"
 st.set_page_config(
     page_title="Legal Document Summarizer", 
     layout="wide",
